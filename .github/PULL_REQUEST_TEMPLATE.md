@@ -10,6 +10,8 @@
 - [ ] I have updated the documentation accordingly.
 - [ ] I have added tests to cover my changes.
 
+## Description
+
 <!-- Describe your changes in detail -->
 
 <!--
