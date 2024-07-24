@@ -1,14 +1,12 @@
-# Strivacity React native SDK
+![React Native mobile SDK](https://static.strivacity.com/images/react-native-mobile-sdk.png)
 
-[![npm package version](https://badge.fury.io/js/strivacity-react-native.svg)](https://badge.fury.io/js/strivacity-react-native)
+[![npm package version](https://badge.fury.io/js/strivacity-react-native.svg)](https://badge.fury.io/js/strivacity-react-native) This versions supports `react-native@0.63+`
 
-This versions supports `react-native@0.63+`.
+This SDK allows you to integrate Strivacity’s policy-driven journeys into your brand’s React Native mobile application. The SDK uses the OAuth 2.0 PKCE flow authenticate with Strivacity.
 
-## Documentation
+See our [Developer Portal](https://www.strivacity.com/learn-support/developer-hub) to get started with developing with the Strivacity product.
 
-Before start using this SDK, please read our [documentation](https://www.strivacity.com/learn-support/developer-hub).
-
-## Introduction
+# How to include in your project
 
 Get started by installing the dependencies in your application
 
@@ -18,7 +16,7 @@ yarn add strivacity-react-native
 npm install strivacity-react-native --save
 ```
 
-### Usage
+## Usage
 
 ```jsx
 import { authorize } from 'strivacity-react-native';
@@ -40,26 +38,24 @@ try {
 }
 ```
 
-## Setup
-
-### iOS Setup
+## iOS Setup
 
 To setup the iOS project, you need to perform three steps:
 
-#### Install native dependencies
+### Install native dependencies
 
 This library depends on the native AppAuth-ios project. To keep the React Native library agnostic of your dependency management method, the native libraries are not distributed as part of the bridge.
 
 AppAuth supports three options for dependency management.
 
-##### CocoaPods
+#### CocoaPods
 
 ```sh
 cd ios
 pod install
 ```
 
-##### Carthage
+#### Carthage
 
 With [Carthage](https://github.com/Carthage/Carthage), add the following line to your Cartfile:
 
@@ -73,7 +69,7 @@ Drag and drop `AppAuth.framework` from `ios/Carthage/Build/iOS` under `Framework
 
 Add a copy files build step for `AppAuth.framework`: open Build Phases on Xcode, add a new "Copy Files" phase, choose "Frameworks" as destination, add `AppAuth.framework` and ensure "Code Sign on Copy" is checked.
 
-##### Static Library
+#### Static Library
 
 You can also use [AppAuth-iOS](https://github.com/openid/AppAuth-iOS) as a static library. This requires linking the library and your project and including the headers. Suggested configuration:
 
@@ -82,7 +78,7 @@ You can also use [AppAuth-iOS](https://github.com/openid/AppAuth-iOS) as a stati
 3. Include libAppAuth as a linked library for your target (in the "General -> Linked Framework and Libraries" section of your target).
 4. Add `AppAuth-iOS/Source` to your search paths of your target ("Build Settings -> "Header Search Paths").
 
-#### Register redirect URL scheme
+### Register redirect URL scheme
 
 If you intend to support iOS 10 and older, you need to define the supported redirect URL schemes in your Info.plist as follows:
 
@@ -100,16 +96,16 @@ If you intend to support iOS 10 and older, you need to define the supported redi
 </array>
 ```
 
-`CFBundleURLName` is any globally unique string. A common practice is to use your app identifier.
+`CFBundleURLName` is any globally unique string. A common practice is to use your app identifier.  
 `CFBundleURLSchemes` is an array of URL schemes your app needs to handle. The scheme is the beginning of your OAuth Redirect URL, up to the scheme separator (`:`) character. E.g. if your redirect uri is `com.myapp://oauth`, then the url scheme will is `com.myapp`.
 
-#### Define openURL callback in AppDelegate
+### Define openURL callback in AppDelegate
 
 You need to retain the auth session, in order to continue the authorization flow from the redirect. Follow these steps:
 
 `StrivacityReactNative` will call on the given app's delegate via `[UIApplication sharedApplication].delegate`. Furthermore, StrivacityReactNative expects the delegate instance to conform to the protocol `StrivacityReactNativeAuthFlowManager`. Make `AppDelegate` conform to `StrivacityReactNativeAuthFlowManager` with the following changes to `AppDelegate.h`:
 
-##### For react-native >= 0.68
+#### For react-native >= 0.68
 
 ```
 - #import <React/RCTLinkingManager.h>
@@ -155,7 +151,7 @@ If you want to support universal links, add the following to `AppDelegate.mm` un
 - }
 ```
 
-##### For react-native < 0.68
+#### For react-native \< 0.68
 
 ```
 - #import "StrivacityReactNativeAuthFlowManager.h"
@@ -191,7 +187,7 @@ If you want to support universal links, add the following to `AppDelegate.m` und
 - }
 ```
 
-#### Integration of the library with a Swift iOS project
+### Integration of the library with a Swift iOS project
 
 The approach mentioned should work with Swift. In this case one should make `AppDelegate` conform to `StrivacityReactNativeAuthFlowManager`. Note that this is not tested/guaranteed by the maintainers.
 
@@ -226,7 +222,7 @@ Steps:
    }
 ```
 
-### Android Setup
+## Android Setup
 
 To setup the Android project, you need to add redirect scheme manifest placeholder:
 
@@ -244,7 +240,7 @@ android {
 
 The scheme is the beginning of your OAuth Redirect URL, up to the scheme separator (`:`) character. E.g. if your redirect uri is `com.myapp://oauth`, then the url scheme will is `com.myapp`. The scheme must be in lowercase.
 
-#### Notes
+### Notes
 
 When integrating with [React Navigation deep linking](https://reactnavigation.org/docs/deep-linking/#set-up-with-bare-react-native-projects), be sure to make this scheme (and the scheme in the config's redirectUrl) unique from the scheme defined in the deep linking intent-filter. E.g. if the scheme in your intent-filter is set to com.myapp, then update the above scheme/redirectUrl to be com.myapp
 
@@ -268,7 +264,7 @@ Keychain Services allows you to securely store small chunks of sensitive info fo
 
 Shared Preferences is the Android equivalent for a persistent key-value data store. Data in Shared Preferences is not encrypted by default. Encrypted Shared Preferences wraps the Shared Preferences class for Android, and automatically encrypts keys and values.
 
-In order to use iOS's Keychain services or Android's Secure Shared Preferences, you either can write a JS < - > native interface yourself or use a library which wraps them for you. Some even provide a unified API.
+In order to use iOS's Keychain services or Android's Secure Shared Preferences, you either can write a JS \< - > native interface yourself or use a library which wraps them for you. Some even provide a unified API.
 
 Related OSS libraries
 
