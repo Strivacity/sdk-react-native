@@ -1,4 +1,4 @@
-# Strivacity React native SDK
+![React Native mobile SDK](https://static.strivacity.com/images/react-native-mobile-sdk.png)
 
 [![npm package version](https://badge.fury.io/js/strivacity-react-native.svg)](https://badge.fury.io/js/strivacity-react-native)
 
