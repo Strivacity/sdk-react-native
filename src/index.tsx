@@ -383,3 +383,5 @@ export const logout = (
 
   return StrivacityReactNative.logout(...nativeMethodArguments);
 };
+
+export * from './types';
