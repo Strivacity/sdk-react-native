@@ -1,4 +1,3 @@
-import type { AuthConfiguration } from '../../src/types';
 import { useState, useCallback, useMemo } from 'react';
 import {
   SafeAreaView,
@@ -9,7 +8,12 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { authorize, refresh, revoke } from 'strivacity-react-native';
+import {
+  authorize,
+  refresh,
+  revoke,
+  type AuthConfiguration,
+} from 'strivacity-react-native';
 
 const config: AuthConfiguration = {
   issuer: '<YOUR_ISSUER_URL>',
