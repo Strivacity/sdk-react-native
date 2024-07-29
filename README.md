@@ -18,6 +18,10 @@ npm install strivacity-react-native --save
 
 ## Usage
 
+> [!WARNING]
+> This SDK is not compatible with "Expo Go" app. It is compatible only with Custom Dev Client and EAS builds.
+> Follow [this guide](https://docs.expo.dev/modules/get-started/#creating-the-local-expo-module) to generate native project directories.
+
 ```jsx
 import { authorize } from 'strivacity-react-native';
 
@@ -96,7 +100,7 @@ If you intend to support iOS 10 and older, you need to define the supported redi
 </array>
 ```
 
-`CFBundleURLName` is any globally unique string. A common practice is to use your app identifier.  
+`CFBundleURLName` is any globally unique string. A common practice is to use your app identifier.
 `CFBundleURLSchemes` is an array of URL schemes your app needs to handle. The scheme is the beginning of your OAuth Redirect URL, up to the scheme separator (`:`) character. E.g. if your redirect uri is `com.myapp://oauth`, then the url scheme will is `com.myapp`.
 
 ### Define openURL callback in AppDelegate
@@ -105,86 +109,127 @@ You need to retain the auth session, in order to continue the authorization flow
 
 `StrivacityReactNative` will call on the given app's delegate via `[UIApplication sharedApplication].delegate`. Furthermore, StrivacityReactNative expects the delegate instance to conform to the protocol `StrivacityReactNativeAuthFlowManager`. Make `AppDelegate` conform to `StrivacityReactNativeAuthFlowManager` with the following changes to `AppDelegate.h`:
 
-#### For react-native >= 0.68
+#### For Expo custom dev client or EAS build
 
 ```
-- #import <React/RCTLinkingManager.h>
-- #import "StrivacityReactNativeAuthFlowManager.h"
++ #import <StrivacityReactNativeAuthFlowManager.h>
 
-* @interface AppDelegate : RCTAppDelegate
+- @interface AppDelegate : EXAppDelegateWrapper
++ @interface AppDelegate : EXAppDelegateWrapper <StrivacityReactNativeAuthFlowManager>
 
-- @interface AppDelegate : RCTAppDelegate <StrivacityReactNativeAuthFlowManager>
++ @property(nonatomic, weak) id<StrivacityReactNativeAuthFlowManagerDelegate> authorizationFlowManagerDelegate;
 
-- @property(nonatomic, weak) id<StrivacityReactNativeAuthFlowManagerDelegate> authorizationFlowManagerDelegate;
+@end
 ```
 
 Add the following code to `AppDelegate.mm` to support React Navigation deep linking and overriding browser behavior in the authorization process
 
 ```
-- - (BOOL) application: (UIApplication \*)application
--              openURL: (NSURL *)url
--              options: (NSDictionary<UIApplicationOpenURLOptionsKey, id> *) options
-- {
-- if ([self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]) {
--     return YES;
-- }
-- return [RCTLinkingManager application:application openURL:url options:options];
-- }
+// Linking API
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
++  if ([self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]) {
++     return YES;
++ }
+  return [super application:application openURL:url options:options] || [RCTLinkingManager application:application openURL:url options:options];
+}
 ```
 
 If you want to support universal links, add the following to `AppDelegate.mm` under `continueUserActivity`
 
 ```
-- - (BOOL) application: (UIApplication \*) application
-- continueUserActivity: (nonnull NSUserActivity \*)userActivity
-- restorationHandler: (nonnull void (^)(NSArray<id<UIUserActivityRestoring>> \* \_Nullable))restorationHandler
-- {
-- if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb]) {
--     if (self.authorizationFlowManagerDelegate) {
--       BOOL resumableAuth = [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:userActivity.webpageURL];
--       if (resumableAuth) {
--         return YES;
--       }
--     }
-- }
-- return [RCTLinkingManager application:application continueUserActivity:userActivity restorationHandler:restorationHandler];
-- }
+// Universal Links
+- (BOOL)application:(UIApplication *)application continueUserActivity:(nonnull NSUserActivity *)userActivity restorationHandler:(nonnull void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler {
++  if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb]) {
++      if (self.authorizationFlowManagerDelegate) {
++        BOOL resumableAuth = [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:userActivity.webpageURL];
++        if (resumableAuth) {
++          return YES;
++        }
++      }
++  }
+
+  BOOL result = [RCTLinkingManager application:application continueUserActivity:userActivity restorationHandler:restorationHandler];
+  return [super application:application continueUserActivity:userActivity restorationHandler:restorationHandler] || result;
+}
+```
+
+#### For react-native >= 0.68
+
+```
++ #import <React/RCTLinkingManager.h>
++ #import "StrivacityReactNativeAuthFlowManager.h"
+
+- @interface AppDelegate : RCTAppDelegate
++ @interface AppDelegate : RCTAppDelegate <StrivacityReactNativeAuthFlowManager>
+
++ @property(nonatomic, weak) id<StrivacityReactNativeAuthFlowManagerDelegate> authorizationFlowManagerDelegate;
+```
+
+Add the following code to `AppDelegate.mm` to support React Navigation deep linking and overriding browser behavior in the authorization process
+
+```
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey, id> *)options
+{
+  if ([self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]) {
+      return YES;
+  }
+
+  return [RCTLinkingManager application:application openURL:url options:options];
+}
+```
+
+If you want to support universal links, add the following to `AppDelegate.mm` under `continueUserActivity`
+
+```
+- (BOOL)application:(UIApplication *)application continueUserActivity:(nonnull NSUserActivity *)userActivity restorationHandler:(nonnull void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler {
+{
+  if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb]) {
+      if (self.authorizationFlowManagerDelegate) {
+        BOOL resumableAuth = [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:userActivity.webpageURL];
+        if (resumableAuth) {
+          return YES;
+        }
+      }
+  }
+
+  return [RCTLinkingManager application:application continueUserActivity:userActivity restorationHandler:restorationHandler];
+}
 ```
 
 #### For react-native \< 0.68
 
 ```
-- #import "StrivacityReactNativeAuthFlowManager.h"
++ #import "StrivacityReactNativeAuthFlowManager.h"
 
-* @interface AppDelegate : UIResponder <UIApplicationDelegate, RCTBridgeDelegate>
+- @interface AppDelegate : UIResponder <UIApplicationDelegate, RCTBridgeDelegate>
++ @interface AppDelegate : UIResponder <UIApplicationDelegate, RCTBridgeDelegate, StrivacityReactNativeAuthFlowManager>
 
-- @interface AppDelegate : UIResponder <UIApplicationDelegate, RCTBridgeDelegate, StrivacityReactNativeAuthFlowManager>
-
-- @property(nonatomic, weak)id<StrivacityReactNativeAuthFlowManagerDelegate>authorizationFlowManagerDelegate;
++ @property(nonatomic, weak)id<StrivacityReactNativeAuthFlowManagerDelegate>authorizationFlowManagerDelegate;
 ```
 
 Add the following code to `AppDelegate.m` (to support iOS 10, React Navigation deep linking and overriding browser behavior in the authorization process)
 
 ```
-- - (BOOL)application:(UIApplication _)app openURL:(NSURL _)url options:(NSDictionary<NSString _, id> _) options {
-- if ([self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]) {
-- return YES;
-- }
-- return [RCTLinkingManager application:app openURL:url options:options];
-- }
+- (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<NSString *, id> *) options {
+	if ([self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]) {
+		return YES;
+	}
+
+	return [RCTLinkingManager application:app openURL:url options:options];
+}
 ```
 
 If you want to support universal links, add the following to `AppDelegate.m` under `continueUserActivity`
 
 ```
-- if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb]) {
-- if (self.authorizationFlowManagerDelegate) {
--     BOOL resumableAuth = [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:userActivity.webpageURL];
--     if (resumableAuth) {
--       return YES;
--     }
-- }
-- }
+if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb]) {
+	if (self.authorizationFlowManagerDelegate) {
+			BOOL resumableAuth = [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:userActivity.webpageURL];
+			if (resumableAuth) {
+				return YES;
+			}
+	}
+}
 ```
 
 ### Integration of the library with a Swift iOS project
@@ -209,16 +254,16 @@ Steps:
 2. `AppDelegate.swift` should implement the `StrivacityReactNativeAuthFlowManager` protocol and have a handler for url deep linking. The result should look something like this:
 
 ```
-   @UIApplicationMain
-   class AppDelegate: UIApplicationDelegate, StrivacityReactNativeAuthFlowManager { //<-- note the additional StrivacityReactNativeAuthFlowManager protocol
-   public weak var authorizationFlowManagerDelegate: StrivacityReactNativeAuthFlowManagerDelegate? // <-- this property is required by the protocol
-   //"open url" delegate function for managing deep linking needs to call the resumeExternalUserAgentFlowWithURL method
-   func application(
-   \_ app: UIApplication,
-   open url: URL,
-   options: [UIApplicationOpenURLOptionsKey: Any] = [:]) -> Bool {
-   return authorizationFlowManagerDelegate?.resumeExternalUserAgentFlow(with: url) ?? false
-   }
+@UIApplicationMain
+class AppDelegate: UIApplicationDelegate, StrivacityReactNativeAuthFlowManager { //<-- note the additional StrivacityReactNativeAuthFlowManager protocol
+	public weak var authorizationFlowManagerDelegate: StrivacityReactNativeAuthFlowManagerDelegate? // <-- this property is required by the protocol
+	//"open url" delegate function for managing deep linking needs to call the resumeExternalUserAgentFlowWithURL method
+	func application(
+		_ app: UIApplication,
+		open url: URL,
+		options: [UIApplicationOpenURLOptionsKey: Any] = [:]) -> Bool {
+		return authorizationFlowManagerDelegate?.resumeExternalUserAgentFlow(with: url) ?? false
+}
    }
 ```
 
