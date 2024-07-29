@@ -18,6 +18,10 @@ npm install strivacity-react-native --save
 
 ## Usage
 
+> [!WARNING]
+> This SDK is not compatible with "Expo Go" app. It is compatible only with Custom Dev Client and EAS builds.
+> Follow [this guide](https://docs.expo.dev/modules/get-started/#creating-the-local-expo-module) to generate native project directories.
+
 ```jsx
 import { authorize } from 'strivacity-react-native';
 
@@ -104,6 +108,50 @@ If you intend to support iOS 10 and older, you need to define the supported redi
 You need to retain the auth session, in order to continue the authorization flow from the redirect. Follow these steps:
 
 `StrivacityReactNative` will call on the given app's delegate via `[UIApplication sharedApplication].delegate`. Furthermore, StrivacityReactNative expects the delegate instance to conform to the protocol `StrivacityReactNativeAuthFlowManager`. Make `AppDelegate` conform to `StrivacityReactNativeAuthFlowManager` with the following changes to `AppDelegate.h`:
+
+#### For Expo custom dev client or EAS build
+
+```
++ #import <StrivacityReactNativeAuthFlowManager.h>
+
+- @interface AppDelegate : EXAppDelegateWrapper
++ @interface AppDelegate : EXAppDelegateWrapper <StrivacityReactNativeAuthFlowManager>
+
++ @property(nonatomic, weak) id<StrivacityReactNativeAuthFlowManagerDelegate> authorizationFlowManagerDelegate;
+
+@end
+```
+
+Add the following code to `AppDelegate.mm` to support React Navigation deep linking and overriding browser behavior in the authorization process
+
+```
+// Linking API
+- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {
++  if ([self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:url]) {
++     return YES;
++ }
+  return [super application:application openURL:url options:options] || [RCTLinkingManager application:application openURL:url options:options];
+}
+```
+
+If you want to support universal links, add the following to `AppDelegate.mm` under `continueUserActivity`
+
+```
+// Universal Links
+- (BOOL)application:(UIApplication *)application continueUserActivity:(nonnull NSUserActivity *)userActivity restorationHandler:(nonnull void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler {
++  if ([userActivity.activityType isEqualToString:NSUserActivityTypeBrowsingWeb]) {
++      if (self.authorizationFlowManagerDelegate) {
++        BOOL resumableAuth = [self.authorizationFlowManagerDelegate resumeExternalUserAgentFlowWithURL:userActivity.webpageURL];
++        if (resumableAuth) {
++          return YES;
++        }
++      }
++  }
+
+  BOOL result = [RCTLinkingManager application:application continueUserActivity:userActivity restorationHandler:restorationHandler];
+  return [super application:application continueUserActivity:userActivity restorationHandler:restorationHandler] || result;
+}
+```
 
 #### For react-native >= 0.68
 
