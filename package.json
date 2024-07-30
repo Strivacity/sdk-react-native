@@ -110,7 +110,6 @@
   },
   "release-it": {
     "git": {
-      "requireBranch": "main",
       "commitMessage": "chore: release ${version}",
       "tagName": "v${version}"
     },
