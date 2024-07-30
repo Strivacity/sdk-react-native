@@ -32,7 +32,7 @@ jobs:
         uses: ./.github/actions/setup
 
       - name: Publish
-        run: yarn release --ci
+        run: yarn release --ci --npm.publish --github.release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
