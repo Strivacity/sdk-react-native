@@ -114,11 +114,12 @@
       "tagName": "v${version}"
     },
     "npm": {
-      "publish": true
+      "publish": false,
       "skipChecks": true
     },
     "github": {
-      "release": true
+      "release": false,
+      "skipChecks": true
     },
     "plugins": {
       "@release-it/conventional-changelog": {
